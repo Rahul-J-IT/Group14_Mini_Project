@@ -5,23 +5,33 @@ import Sidebar from "./components/Sidebar";
 import HomePage from "./pages/HomePage";
 import AllCoursesPage from "./pages/AllCoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
+import LecturerDashboardPage from "./pages/LecturerDashboardPage";
+import CourseFormPage from "./pages/CourseFormPage";
+import { LecturerCoursesProvider } from "./context/LecturerCoursesContext";
 
 const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false); // Change to true after login
 
   return (
     <BrowserRouter>
-      <Navbar onMenuClick={() => setSidebarOpen(true)} />
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} />
+      <LecturerCoursesProvider>
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/courses/:section" element={<AllCoursesPage />} />
-          <Route path="/course/:id" element={<CourseDetailPage />} />
-        </Routes>
-      </main>
+        <main>
+          <Routes>
+            {/* Student routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/courses/:section" element={<AllCoursesPage />} />
+            <Route path="/course/:id" element={<CourseDetailPage />} />
+
+            {/* Lecturer routes */}
+            <Route path="/lecturer/dashboard" element={<LecturerDashboardPage />} />
+            <Route path="/lecturer/courses/new" element={<CourseFormPage />} />
+            <Route path="/lecturer/courses/edit/:id" element={<CourseFormPage />} />
+          </Routes>
+        </main>
+      </LecturerCoursesProvider>
     </BrowserRouter>
   );
 };
