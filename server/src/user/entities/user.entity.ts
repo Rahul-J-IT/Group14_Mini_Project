@@ -1,41 +1,46 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 import { ROLES } from "../roles";
 
 @Entity()
 export class User {
+
     @PrimaryGeneratedColumn("uuid")
-    id: number;
+    id: string;
 
     @Column({ nullable: false, unique: true })
     username: string;
 
-    @Column()
+    @Column({ nullable: false })
     firstname: string;
 
-    @Column()
+    @Column({ nullable: false })
     lastname: string;
 
     @Column({ nullable: false, unique: true })
     email: string;
 
-    @Column()
-    password_hash: string;
+    @Column({ nullable: false })
+    password: string;
 
-    @Column()
+    @Column({ nullable: true })
     current_organisation: string;
 
-    @Column()
+    @Column({ nullable: true })
     bio: string;
 
     @Column({ default: false })
     email_verified: boolean;
 
-    @Column({ default: Date.now() })
+    @CreateDateColumn({ type: "timestamp" })
     created_at: Date;
 
-    @Column({ default: ROLES, array: true })
-    role: ROLES
+    @Column({
+        type: "enum",
+        enum: ROLES,
+        default: ROLES.STUDENT,
+    })
+    role: ROLES;
 
-    @Column({ default: true })
-    is_active: boolean
+    @Column({ type: "boolean", default: true })
+    is_active: boolean;
 }
