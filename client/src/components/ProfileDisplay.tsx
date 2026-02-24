@@ -1,4 +1,4 @@
-import { UserProfile } from "../pages/ProfilePage";
+import type { UserProfile } from "../types/user";
 import "../styles/ProfileDisplay.css";
 
 interface ProfileDisplayProps {

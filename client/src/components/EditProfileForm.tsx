@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserProfile } from "../pages/ProfilePage";
+import type { UserProfile } from "../types/user";
 import "../styles/EditProfileForm.css";
 
 interface EditProfileFormProps {

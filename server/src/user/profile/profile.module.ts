@@ -5,7 +5,13 @@ import { ProfileController } from './profile.controller';
 import { UserModule } from '../user.module';
 
 @Module({
-  imports: [UserModule, JwtModule],
+  imports: [
+    UserModule,
+    JwtModule.register({
+      secret: 'MY_SECRET_KEY',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
   controllers: [ProfileController],
   providers: [ProfileService],
   exports: [ProfileService],

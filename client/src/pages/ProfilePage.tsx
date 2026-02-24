@@ -6,19 +6,7 @@ import ChangePasswordForm from "../components/ChangePasswordForm";
 import ProfileDisplay from "../components/ProfileDisplay";
 import "../styles/ProfilePage.css";
 
-export interface UserProfile {
-  id: string;
-  username: string;
-  firstname: string;
-  lastname: string;
-  email: string;
-  current_organisation: string;
-  bio: string;
-  role: string;
-  created_at: string;
-  email_verified: boolean;
-  is_active: boolean;
-}
+import type { UserProfile } from "../types/user";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
