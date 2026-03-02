@@ -1,11 +1,8 @@
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import CourseSection from "../components/CourseSection";
-import {
-  recommendedCourses,
-  enrolledCourses,
-  exploreCourses,
-  trendingCourses,
-} from "../data/courses";
+import { api } from "../api";
+import type { Course } from "../api";
 
 const WelcomeBanner: React.FC = () => (
   <div className="relative mb-10 rounded-3xl overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-700 p-8 shadow-2xl">
@@ -50,6 +47,31 @@ const WelcomeBanner: React.FC = () => (
 );
 
 const HomePage: React.FC = () => {
+  const [recommended, setRecommended] = useState<Course[]>([]);
+  const [enrolled, setEnrolled] = useState<Course[]>([]);
+  const [explore, setExplore] = useState<Course[]>([]);
+  const [trending, setTrending] = useState<Course[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [r, e, x, t] = await Promise.all([
+          api.getSectionCourses("recommended", 6),
+          api.getSectionCourses("enrolled", 6),
+          api.getSectionCourses("explore", 6),
+          api.getSectionCourses("trending", 6),
+        ]);
+        setRecommended(r);
+        setEnrolled(e);
+        setExplore(x);
+        setTrending(t);
+      } catch (err) {
+        console.error("failed to load home sections", err);
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
@@ -58,7 +80,7 @@ const HomePage: React.FC = () => {
         <CourseSection
           title="Recommended for You"
           subtitle="Curated based on your interests and learning history"
-          courses={recommendedCourses.slice(0, 6)}
+          courses={recommended}
           accentColor="violet"
           viewAllPath="/courses/recommended"
         />
@@ -66,7 +88,7 @@ const HomePage: React.FC = () => {
         <CourseSection
           title="Continue Learning"
           subtitle="Pick up where you left off"
-          courses={enrolledCourses.slice(0, 6)}
+          courses={enrolled}
           showProgress={true}
           accentColor="indigo"
           viewAllPath="/courses/enrolled"
@@ -75,7 +97,7 @@ const HomePage: React.FC = () => {
         <CourseSection
           title="Explore New Topics"
           subtitle="Discover something outside your comfort zone"
-          courses={exploreCourses.slice(0, 6)}
+          courses={explore}
           accentColor="emerald"
           viewAllPath="/courses/explore"
         />
@@ -83,7 +105,7 @@ const HomePage: React.FC = () => {
         <CourseSection
           title="Trending Right Now"
           subtitle="What thousands of learners are signing up for this week"
-          courses={trendingCourses.slice(0, 6)}
+          courses={trending}
           accentColor="rose"
           viewAllPath="/courses/trending"
         />

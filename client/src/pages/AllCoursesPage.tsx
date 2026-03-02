@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -13,14 +13,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import CourseCardGrid from "../components/CourseCardGrid";
-import {
-  recommendedCourses,
-  enrolledCourses,
-  exploreCourses,
-  trendingCourses,
-} from "../data/courses";
+import { api } from "../api";
+import type { Course, CourseLevel } from "../api"; // reuse types from API client
 
-import type { Course, CourseLevel } from "../data/courses";
 
 
 // ── Section config ────────────────────────────────────────────────────────────
@@ -29,7 +24,6 @@ type SectionKey = "recommended" | "enrolled" | "explore" | "trending";
 interface SectionConfig {
   title: string;
   subtitle: string;
-  courses: Course[];
   showProgress: boolean;
   accent: string;
   accentBg: string;
@@ -39,11 +33,10 @@ interface SectionConfig {
   gradient: string;
 }
 
-const SECTION_MAP: Record<SectionKey, SectionConfig> = {
+const SECTION_MAP: Record<SectionKey, Omit<SectionConfig, 'courses'>> = {
   recommended: {
     title: "Recommended for You",
     subtitle: "Curated based on your interests and learning history",
-    courses: recommendedCourses,
     showProgress: false,
     accent: "violet",
     accentBg: "bg-violet-50",
@@ -55,7 +48,6 @@ const SECTION_MAP: Record<SectionKey, SectionConfig> = {
   enrolled: {
     title: "Continue Learning",
     subtitle: "Pick up where you left off",
-    courses: enrolledCourses,
     showProgress: true,
     accent: "indigo",
     accentBg: "bg-indigo-50",
@@ -67,7 +59,6 @@ const SECTION_MAP: Record<SectionKey, SectionConfig> = {
   explore: {
     title: "Explore New Topics",
     subtitle: "Discover something outside your comfort zone",
-    courses: exploreCourses,
     showProgress: false,
     accent: "emerald",
     accentBg: "bg-emerald-50",
@@ -79,7 +70,6 @@ const SECTION_MAP: Record<SectionKey, SectionConfig> = {
   trending: {
     title: "Trending Right Now",
     subtitle: "What thousands of learners are signing up for this week",
-    courses: trendingCourses,
     showProgress: false,
     accent: "rose",
     accentBg: "bg-rose-50",
@@ -145,6 +135,10 @@ const AllCoursesPage: React.FC = () => {
   const sectionKey = isSectionKey(section) ? section : "recommended";
   const config = SECTION_MAP[sectionKey];
 
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState<string>("");
   const [sort, setSort] = useState<SortOption>("popular");
   const [filters, setFilters] = useState<Filters>({
@@ -155,15 +149,40 @@ const AllCoursesPage: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
-  // Derive unique categories from this section's courses
+  // fetch data whenever the section changes
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    const loader = async () => {
+      try {
+        if (["recommended", "enrolled", "explore", "trending"].includes(sectionKey)) {
+          const resp = await api.getSectionCourses(sectionKey);
+          setCourses(resp);
+        } else {
+          const r = await api.getCourses();
+          setCourses(r.data);
+        }
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Failed to load courses");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loader();
+  }, [sectionKey]);
+
+  // derive unique categories from fetched courses
   const allCategories = useMemo(
-    () => Array.from(new Set(config.courses.map((c) => c.category))).sort(),
-    [config.courses]
+    () => Array.from(new Set(courses.map((c) => c.category))).sort(),
+    [courses]
   );
 
   // Filter
   const filtered = useMemo(() => {
-    let result = [...config.courses];
+    let result = [...courses];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -192,7 +211,7 @@ const AllCoursesPage: React.FC = () => {
     }
 
     return result;
-  }, [config.courses, search, filters]);
+  }, [courses, search, filters]);
 
   // Sort
   const sorted = useMemo(() => {
@@ -424,7 +443,11 @@ const AllCoursesPage: React.FC = () => {
         )}
 
         {/* Grid */}
-        {sorted.length > 0 ? (
+        {loading ? (
+          <p className="text-center py-12">Loading courses...</p>
+        ) : error ? (
+          <p className="text-center py-12 text-red-500">{error}</p>
+        ) : sorted.length > 0 ? (
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {sorted.map((course) => (

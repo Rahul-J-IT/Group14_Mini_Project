@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import CourseCard from "./CourseCard";
-import type { Course } from "../data/courses";
+import type { Course } from "../api";
 
 type AccentColor = "violet" | "indigo" | "emerald" | "rose";
 

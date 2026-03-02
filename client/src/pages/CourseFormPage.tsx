@@ -1,12 +1,12 @@
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Save, Plus, Trash2, GripVertical,
   Image, BookOpen, Tag, ChevronDown, Info,
 } from "lucide-react";
-import { useLecturerCourses } from "../context/LecturerCoursesContext";
-import type { CourseLevel, CourseModule } from "../data/courses";
+import { api } from "../api";
+import type { CourseLevel, CourseModule } from "../api";
 
 const LEVELS: CourseLevel[] = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 
@@ -74,33 +74,35 @@ export default function CourseFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
-  const { addCourse, updateCourse, getCourseById } = useLecturerCourses();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [saved, setSaved] = useState(false);
 
+  // load existing course when editing
   useEffect(() => {
     if (isEdit && id) {
-      const course = getCourseById(id);
-      if (course) {
-        setForm({
-          title: course.title,
-          short_description: course.short_description,
-          description: course.description ?? "",
-          price: String(course.price),
-          level: course.level,
-          category: course.category,
-          language: course.language,
-          thumbnail_url: course.thumbnail_url,
-          estimated_duration_minutes: String(course.estimated_duration_minutes),
-          is_featured: course.is_featured ?? false,
-          tags: (course.tags ?? []).join(", "),
-          what_you_learn: course.what_you_learn?.length ? course.what_you_learn : ["", ""],
-          requirements: course.requirements?.length ? course.requirements : ["", ""],
-          curriculum: course.curriculum?.length ? course.curriculum : [{ title: "", lessons: [""] }],
-        });
-      }
+      api
+        .getCourse(id)
+        .then((course) => {
+          setForm({
+            title: course.title,
+            short_description: course.short_description,
+            description: course.description ?? "",
+            price: String(course.price),
+            level: course.level as CourseLevel,
+            category: course.category,
+            language: course.language,
+            thumbnail_url: course.thumbnail_url,
+            estimated_duration_minutes: String(course.estimated_duration_minutes),
+            is_featured: course.is_featured ?? false,
+            tags: (course.tags ?? []).join(", "),
+            what_you_learn: course.what_you_learn?.length ? course.what_you_learn : ["", ""],
+            requirements: course.requirements?.length ? course.requirements : ["", ""],
+            curriculum: course.curriculum?.length ? course.curriculum : [{ title: "", lessons: [""] }],
+          });
+        })
+        .catch((e) => console.error("failed to load course", e));
     }
   }, [id]);
 
@@ -164,7 +166,7 @@ export default function CourseFormPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -174,24 +176,24 @@ export default function CourseFormPage() {
       description: form.description.trim(),
       price: Number(form.price),
       level: form.level,
-      category: form.category,
+      // TODO: map category string to category_id when category lookup is ready
+      // category_id: undefined,
       language: form.language,
       thumbnail_url: form.thumbnail_url || `https://picsum.photos/seed/${Date.now()}/800/450`,
       estimated_duration_minutes: Number(form.estimated_duration_minutes),
       is_featured: form.is_featured,
-      instructor: "Alex Johnson",
-      instructor_bio: "Senior full-stack developer with 10+ years of experience.",
-      instructor_avatar: "https://picsum.photos/seed/lecav1/80/80",
+      // TODO: get real instructor_id from auth context once implemented
+      // instructor_id: undefined,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       what_you_learn: form.what_you_learn.filter(Boolean),
       requirements: form.requirements.filter(Boolean),
       curriculum: form.curriculum.filter((m) => m.title.trim()),
-    };
+    } as any;
 
     if (isEdit && id) {
-      updateCourse(id, payload);
+      await api.updateCourse(id, payload);
     } else {
-      addCourse(payload);
+      await api.createCourse(payload);
     }
 
     setSaved(true);

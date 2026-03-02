@@ -1,6 +1,6 @@
 import { createContext, useContext, useState  } from "react";
 import type {ReactNode} from "react";
-import type { Course, CourseLevel } from "../data/courses";
+import type { Course, CourseLevel } from "../api";
 
 // Lecturer's own courses — seeded with 3 dummy ones
 const INITIAL_COURSES: Course[] = [

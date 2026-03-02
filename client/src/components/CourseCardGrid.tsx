@@ -1,6 +1,6 @@
 import { Star, Clock, Users, Play, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { Course } from "../data/courses";
+import type { Course } from "../api";
 
 interface CourseCardGridProps {
   course: Course;

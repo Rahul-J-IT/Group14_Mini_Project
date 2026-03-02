@@ -4,8 +4,9 @@ import {
   CheckCircle, PlayCircle, ChevronDown, ChevronUp,
   ShoppingCart, Zap, Award, BookOpen, Tag
 } from "lucide-react";
-import { useState } from "react";
-import { allCoursesMap } from "../data/courses";
+import { useState, useEffect } from "react";
+import { api } from "../api";
+import type { Course } from "../api";
 
 const LEVEL_COLORS: Record<string, string> = {
   BEGINNER: "bg-emerald-100 text-emerald-700",
@@ -47,12 +48,31 @@ export default function CourseDetailPage() {
   const navigate = useNavigate();
   const [expandedModule, setExpandedModule] = useState<number | null>(0);
 
-  const course = id ? allCoursesMap[id] : null;
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!course) {
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    api
+      .getCourse(id)
+      .then((c) => setCourse(c))
+      .catch((e) => {
+        console.error(e);
+        setError("Course not found");
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return <p className="text-center py-12">Loading...</p>;
+  }
+  if (error || !course) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <p className="text-2xl font-bold text-slate-700">Course not found</p>
+        <p className="text-2xl font-bold text-slate-700">{error || "Course not found"}</p>
         <button
           onClick={() => navigate(-1)}
           className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-semibold"
