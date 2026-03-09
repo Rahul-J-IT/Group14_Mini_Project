@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,15 +12,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import CourseCardGrid from "../components/CourseCardGrid";
+import api from "../api/axios";
+
+// Fallback hardcoded data
 import {
-  recommendedCourses,
-  enrolledCourses,
-  exploreCourses,
-  trendingCourses,
+  recommendedCourses as hardcodedRecommended,
+  enrolledCourses as hardcodedEnrolled,
+  exploreCourses as hardcodedExplore,
+  trendingCourses as hardcodedTrending,
 } from "../data/courses";
 
 import type { Course, CourseLevel } from "../data/courses";
-
 
 // ── Section config ────────────────────────────────────────────────────────────
 type SectionKey = "recommended" | "enrolled" | "explore" | "trending";
@@ -38,57 +40,6 @@ interface SectionConfig {
   gradient: string;
 }
 
-const SECTION_MAP: Record<SectionKey, SectionConfig> = {
-  recommended: {
-    title: "Recommended for You",
-    subtitle: "Curated based on your interests and learning history",
-    courses: recommendedCourses,
-    showProgress: false,
-    accent: "violet",
-    accentBg: "bg-violet-50",
-    accentText: "text-violet-600",
-    accentBorder: "border-violet-200",
-    icon: <Sparkles size={20} />,
-    gradient: "from-violet-600 via-indigo-600 to-blue-700",
-  },
-  enrolled: {
-    title: "Continue Learning",
-    subtitle: "Pick up where you left off",
-    courses: enrolledCourses,
-    showProgress: true,
-    accent: "indigo",
-    accentBg: "bg-indigo-50",
-    accentText: "text-indigo-600",
-    accentBorder: "border-indigo-200",
-    icon: <BookOpen size={20} />,
-    gradient: "from-indigo-600 via-blue-600 to-cyan-600",
-  },
-  explore: {
-    title: "Explore New Topics",
-    subtitle: "Discover something outside your comfort zone",
-    courses: exploreCourses,
-    showProgress: false,
-    accent: "emerald",
-    accentBg: "bg-emerald-50",
-    accentText: "text-emerald-600",
-    accentBorder: "border-emerald-200",
-    icon: <Compass size={20} />,
-    gradient: "from-emerald-600 via-teal-600 to-cyan-600",
-  },
-  trending: {
-    title: "Trending Right Now",
-    subtitle: "What thousands of learners are signing up for this week",
-    courses: trendingCourses,
-    showProgress: false,
-    accent: "rose",
-    accentBg: "bg-rose-50",
-    accentText: "text-rose-600",
-    accentBorder: "border-rose-200",
-    icon: <TrendingUp size={20} />,
-    gradient: "from-rose-600 via-pink-600 to-fuchsia-600",
-  },
-};
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 type SortOption = "popular" | "rating" | "newest" | "price-low" | "price-high" | "duration";
 
@@ -102,6 +53,28 @@ interface Filters {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const isSectionKey = (key: string | undefined): key is SectionKey =>
   ["recommended", "enrolled", "explore", "trending"].includes(key ?? "");
+
+// Helper to map backend course to frontend Course interface
+const mapCourse = (backendCourse: any): Course => {
+  return {
+    id: String(backendCourse.id),
+    title: backendCourse.title,
+    instructor: backendCourse.instructor?.name || "Unknown Instructor",
+    instructor_bio: backendCourse.instructor?.bio,
+    instructor_avatar: backendCourse.instructor?.avatar,
+    thumbnail_url: backendCourse.thumbnailUrl || "https://picsum.photos/seed/default/800/450",
+    price: parseFloat(backendCourse.price),
+    average_rating: 4.5, // Mocked for now
+    total_enrollments: backendCourse.enrollments?.length || 0,
+    level: backendCourse.level || "BEGINNER",
+    estimated_duration_minutes: backendCourse.duration || 600,
+    short_description: backendCourse.description?.substring(0, 100) + "...",
+    description: backendCourse.description,
+    language: backendCourse.language || "English",
+    category: backendCourse.category?.name || "General",
+    progress: backendCourse.enrollmentProgress,
+  };
+};
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 const SortSelect: React.FC<{ value: SortOption; onChange: (v: SortOption) => void; accentText: string }> = ({
@@ -142,7 +115,11 @@ const AllCoursesPage: React.FC = () => {
   const navigate = useNavigate();
 
   const sectionKey = isSectionKey(section) ? section : "recommended";
-  const config = SECTION_MAP[sectionKey];
+
+  // State for dynamic courses
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>(hardcodedEnrolled);
+  const [publishedCourses, setPublishedCourses] = useState<Course[]>(hardcodedRecommended); // fallback
+  const [isLoading, setIsLoading] = useState(true);
 
   const [search, setSearch] = useState<string>("");
   const [sort, setSort] = useState<SortOption>("popular");
@@ -153,6 +130,94 @@ const AllCoursesPage: React.FC = () => {
     minRating: 0,
   });
   const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        // Fetch enrolled courses
+        const enrollmentsRes = await api.get('/enrollments');
+        const enrollmentsData = enrollmentsRes.data || [];
+        const mappedEnrolled = enrollmentsData.map((e: any) => {
+           const c = mapCourse(e.course);
+           c.progress = e.progress || 0;
+           return c;
+        });
+        
+        // Fetch all published courses
+        const coursesRes = await api.get('/courses/published');
+        const mappedCourses = (coursesRes.data || []).map(mapCourse);
+
+        // If backend returns data, override the defaults
+        if (mappedEnrolled.length > 0 || enrollmentsData.length === 0) { // respect empty array if actually nothing enrolled
+            setEnrolledCourses(mappedEnrolled);
+        }
+        if (mappedCourses.length > 0) {
+            setPublishedCourses(mappedCourses);
+        }
+
+      } catch (err) {
+        console.error("Failed to load courses data", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  const SECTION_MAP = useMemo<Record<SectionKey, SectionConfig>>(() => ({
+    recommended: {
+      title: "Recommended for You",
+      subtitle: "Curated based on your interests and learning history",
+      courses: publishedCourses.length > 0 ? publishedCourses : hardcodedRecommended,
+      showProgress: false,
+      accent: "violet",
+      accentBg: "bg-violet-50",
+      accentText: "text-violet-600",
+      accentBorder: "border-violet-200",
+      icon: <Sparkles size={20} />,
+      gradient: "from-violet-600 via-indigo-600 to-blue-700",
+    },
+    enrolled: {
+      title: "Continue Learning",
+      subtitle: "Pick up where you left off",
+      // Only strictly fallback to hardcoded if we are somehow failing to get actual enrolled
+      // But we initialized state with hardcodedEnrolled, and overwrite it on fetch success.
+      courses: enrolledCourses,
+      showProgress: true,
+      accent: "indigo",
+      accentBg: "bg-indigo-50",
+      accentText: "text-indigo-600",
+      accentBorder: "border-indigo-200",
+      icon: <BookOpen size={20} />,
+      gradient: "from-indigo-600 via-blue-600 to-cyan-600",
+    },
+    explore: {
+      title: "Explore New Topics",
+      subtitle: "Discover something outside your comfort zone",
+      courses: publishedCourses.length > 0 ? publishedCourses : hardcodedExplore,
+      showProgress: false,
+      accent: "emerald",
+      accentBg: "bg-emerald-50",
+      accentText: "text-emerald-600",
+      accentBorder: "border-emerald-200",
+      icon: <Compass size={20} />,
+      gradient: "from-emerald-600 via-teal-600 to-cyan-600",
+    },
+    trending: {
+      title: "Trending Right Now",
+      subtitle: "What thousands of learners are signing up for this week",
+      courses: publishedCourses.length > 0 ? publishedCourses : hardcodedTrending,
+      showProgress: false,
+      accent: "rose",
+      accentBg: "bg-rose-50",
+      accentText: "text-rose-600",
+      accentBorder: "border-rose-200",
+      icon: <TrendingUp size={20} />,
+      gradient: "from-rose-600 via-pink-600 to-fuchsia-600",
+    },
+  }), [publishedCourses, enrolledCourses]);
+
+  const config = SECTION_MAP[sectionKey];
 
   // Derive unique categories from this section's courses
   const allCategories = useMemo(
@@ -240,6 +305,14 @@ const AllCoursesPage: React.FC = () => {
     INTERMEDIATE: "bg-amber-100 text-amber-700 border-amber-200",
     ADVANCED: "bg-rose-100 text-rose-700 border-rose-200",
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -460,3 +533,4 @@ const AllCoursesPage: React.FC = () => {
 };
 
 export default AllCoursesPage;
+

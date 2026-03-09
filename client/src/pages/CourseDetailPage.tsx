@@ -4,7 +4,12 @@ import {
   CheckCircle, PlayCircle, ChevronDown, ChevronUp,
   ShoppingCart, Zap, Award, BookOpen, Tag
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../api/axios";
+
+// Default Course Interface to map onto frontend expected schema
+import type { Course } from "../data/courses";
+// Optional fallback
 import { allCoursesMap } from "../data/courses";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -42,12 +47,135 @@ const StarRating = ({ rating }: { rating: number }) => {
   );
 };
 
+// Helper mapper
+const mapCourse = (backendCourse: any): Course => {
+  return {
+    id: String(backendCourse.id),
+    title: backendCourse.title,
+    instructor: backendCourse.instructor?.name || "Unknown Instructor",
+    instructor_bio: backendCourse.instructor?.bio,
+    instructor_avatar: backendCourse.instructor?.avatar,
+    thumbnail_url: backendCourse.thumbnailUrl || "https://picsum.photos/seed/default/800/450",
+    price: parseFloat(backendCourse.price),
+    average_rating: 4.5, // Mocked for now
+    total_enrollments: backendCourse.enrollments?.length || 0,
+    level: backendCourse.level || "BEGINNER",
+    estimated_duration_minutes: backendCourse.duration || 600,
+    short_description: backendCourse.description?.substring(0, 100) + "...",
+    description: backendCourse.description,
+    language: backendCourse.language || "English",
+    category: backendCourse.category?.name || "General",
+    progress: backendCourse.enrollmentProgress,
+    what_you_learn: [
+      "Build real-world projects from scratch",
+      "Understand core concepts deeply, not just syntax",
+      "Write clean, maintainable, production-ready code"
+    ], // Fake dummy data since backend might lack this
+    requirements: [
+      "Basic computer literacy and internet access",
+      "No prior experience required — we start from the basics",
+    ],
+    curriculum: [ // Mock curriculum since backend section/content structure doesn't seem fully mapped to this generic UI yet
+      {
+        title: "Getting Started",
+        lessons: ["Introduction", "Setup Environment"]
+      }
+    ],
+    tags: ["Programming", "Beginner"]
+  };
+};
+
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [expandedModule, setExpandedModule] = useState<number | null>(0);
 
-  const course = id ? allCoursesMap[id] : null;
+  const [course, setCourse] = useState<Course | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCourseAndEnrollment = async () => {
+      try {
+        setIsLoading(true);
+
+        if (!id) return;
+
+        // Fetch course info
+        let fetchedCourse = null;
+        try {
+           const courseRes = await api.get(`/courses/${id}`);
+           if (courseRes.data) {
+             fetchedCourse = mapCourse(courseRes.data);
+           }
+        } catch(e) {
+             // Fallback to local hardcoded data just in case during testing
+             if (allCoursesMap[id]) {
+                 fetchedCourse = allCoursesMap[id];
+             }
+        }
+
+        setCourse(fetchedCourse);
+
+        // Check if user is already enrolled
+        try {
+          // Alternatively fetch all and filter
+          const enrolRes = await api.get('/enrollments');
+          const isUserEnrolled = (enrolRes.data || []).some((e: any) => String(e.courseId) === id);
+          setIsEnrolled(isUserEnrolled);
+        } catch (e) {
+          console.error("Could not check enrollment", e);
+        }
+
+      } catch (err) {
+        console.error("Error loading course details", err);
+        // Fallback
+        if (id && allCoursesMap[id]) {
+           setCourse(allCoursesMap[id]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCourseAndEnrollment();
+  }, [id]);
+
+  const handleEnroll = async () => {
+    if (!id || !course) return;
+
+    if (isEnrolled) {
+       navigate("/courses/enrolled");
+       return;
+    }
+
+    try {
+      setEnrollmentLoading(true);
+       // Ensure courseId is a number matching the ID param
+      await api.post('/enrollments', { courseId: parseInt(id, 10) });
+      setIsEnrolled(true);
+      alert("Successfully enrolled!");
+    } catch (err: any) {
+      console.error("Failed to enroll", err);
+      // Sometimes it returns 409 if user is already enrolled
+      if (err.response?.status === 409) {
+          setIsEnrolled(true); // Probably already enrolled according to Server
+          alert("You are already enrolled. Going to course.");
+      } else {
+          alert(err.response?.data?.message || "Failed to enroll in the course. Please try again.");
+      }
+    } finally {
+      setEnrollmentLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+      </div>
+    );
+  }
 
   if (!course) {
     return (
@@ -87,7 +215,7 @@ export default function CourseDetailPage() {
                 <span className="text-xs font-bold uppercase tracking-widest text-violet-400">
                   {course.category}
                 </span>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${LEVEL_COLORS[course.level]}`}>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${LEVEL_COLORS[course.level] || LEVEL_COLORS.BEGINNER}`}>
                   {course.level}
                 </span>
                 {course.is_featured && (
@@ -158,7 +286,7 @@ export default function CourseDetailPage() {
                     <span className="text-3xl font-black text-slate-800">
                       {course.price === 0 ? "Free" : `₹${course.price}`}
                     </span>
-                    {course.price > 0 && (
+                    {course.price > 0 && !isEnrolled && (
                       <span className="text-sm text-slate-400 line-through">
                         ₹{Math.round(course.price * 1.6)}
                       </span>
@@ -172,7 +300,15 @@ export default function CourseDetailPage() {
                     <Zap size={16} />
                     Add to Wishlist
                   </button>
-                  <p className="text-center text-xs text-slate-400">30-Day Money-Back Guarantee</p>
+                  
+                  {!isEnrolled && (
+                    <button className="w-full py-3 border-2 border-slate-200 hover:border-violet-300 text-slate-700 hover:text-violet-700 font-semibold rounded-2xl transition-all flex items-center justify-center gap-2">
+                      <Zap size={16} />
+                      Add to Wishlist
+                    </button>
+                  )}
+                  {!isEnrolled && <p className="text-center text-xs text-slate-400">30-Day Money-Back Guarantee</p>}
+                  
                   <div className="border-t border-slate-100 pt-4 flex flex-col gap-2 text-xs text-slate-500">
                     <span className="flex items-center gap-2"><BookOpen size={13} /> {totalLessons} lessons</span>
                     <span className="flex items-center gap-2"><Clock size={13} /> {formatDuration(course.estimated_duration_minutes)} total</span>
@@ -191,7 +327,7 @@ export default function CourseDetailPage() {
         <div className="lg:col-span-2 flex flex-col gap-10">
 
           {/* What you'll learn */}
-          {course.what_you_learn && (
+          {course.what_you_learn && course.what_you_learn.length > 0 && (
             <section className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
               <h2 className="text-xl font-extrabold text-slate-800 mb-5">What You'll Learn</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -218,7 +354,7 @@ export default function CourseDetailPage() {
           )}
 
           {/* Requirements */}
-          {course.requirements && (
+          {course.requirements && course.requirements.length > 0 && (
             <section>
               <h2 className="text-xl font-extrabold text-slate-800 mb-4">Requirements</h2>
               <ul className="flex flex-col gap-2">
@@ -233,7 +369,7 @@ export default function CourseDetailPage() {
           )}
 
           {/* Curriculum */}
-          {course.curriculum && (
+          {course.curriculum && course.curriculum.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-extrabold text-slate-800">Course Content</h2>
@@ -346,21 +482,27 @@ export default function CourseDetailPage() {
                 <span className="text-3xl font-black text-slate-800">
                   {course.price === 0 ? "Free" : `₹${course.price}`}
                 </span>
-                {course.price > 0 && (
+                {course.price > 0 && !isEnrolled && (
                   <span className="text-sm text-slate-400 line-through">
                     ₹{Math.round(course.price * 1.6)}
                   </span>
                 )}
               </div>
-              <button className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-violet-200">
-                <ShoppingCart size={18} />
-                {course.price === 0 ? "Enroll for Free" : "Buy Now"}
+              <button 
+                onClick={handleEnroll}
+                disabled={enrollmentLoading}
+                className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-70 disabled:cursor-not-allowed">
+                {!isEnrolled && <ShoppingCart size={18} />}
+                {enrollmentLoading ? "Processing..." : isEnrolled ? "Go to Course" : (course.price === 0 ? "Enroll for Free" : "Enroll")}
               </button>
-              <button className="w-full py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-2xl flex items-center justify-center gap-2">
-                <Zap size={16} />
-                Add to Wishlist
-              </button>
-              <p className="text-center text-xs text-slate-400">30-Day Money-Back Guarantee</p>
+
+              {!isEnrolled && (
+                <button className="w-full py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-2xl flex items-center justify-center gap-2">
+                  <Zap size={16} />
+                  Add to Wishlist
+                </button>
+              )}
+              {!isEnrolled && <p className="text-center text-xs text-slate-400">30-Day Money-Back Guarantee</p>}
             </div>
           </div>
         </div>
@@ -368,3 +510,4 @@ export default function CourseDetailPage() {
     </div>
   );
 }
+
