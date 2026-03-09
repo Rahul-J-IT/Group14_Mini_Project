@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEmail } from 'class-validator';
+import { IsOptional, IsString, IsEmail, IsEnum } from 'class-validator';
 import { ROLES } from 'src/user/roles';
 
 export class UpdateProfileDto {
@@ -27,5 +27,6 @@ export class UpdateProfileDto {
   username?: string;
 
   @IsOptional()
-  role?: number;
+  @IsEnum(ROLES)
+  role?: ROLES;
 }

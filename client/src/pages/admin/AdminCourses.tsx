@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import { Search } from 'lucide-react';
 
 interface Course {
   id: number;
@@ -17,6 +18,7 @@ const AdminCourses: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   const fetchCourses = async (statusFilter = '') => {
     try {
@@ -65,19 +67,45 @@ const AdminCourses: React.FC = () => {
     }
   };
 
+  const filtered = courses.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.title?.toLowerCase().includes(q) ||
+      `${c.instructor?.firstname} ${c.instructor?.lastname}`.toLowerCase().includes(q) ||
+      c.instructor?.email?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-800">Course Moderation</h2>
-        <select 
-          value={filter} 
-          onChange={(e) => setFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Courses</option>
-          <option value="draft">Review (Drafts)</option>
-          <option value="published">Published</option>
-        </select>
+      <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Course Moderation</h2>
+          <p className="text-sm text-gray-400 mt-0.5">{courses.length} course{courses.length !== 1 ? 's' : ''} total</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent w-48"
+            />
+          </div>
+          {/* Status filter */}
+          <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">All Statuses</option>
+            <option value="draft">Review (Drafts)</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
       </div>
       
       <div className="flex-1 overflow-auto p-0">
@@ -94,10 +122,10 @@ const AdminCourses: React.FC = () => {
           <tbody className="divide-y divide-gray-100 text-sm">
             {loading ? (
               <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Loading courses...</td></tr>
-            ) : courses.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No courses match the criteria</td></tr>
             ) : (
-              courses.map((course) => (
+              filtered.map((course) => (
                 <tr key={course.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{course.title}</td>
                   <td className="px-6 py-4 text-gray-500">{course.instructor?.firstname} {course.instructor?.lastname}</td>

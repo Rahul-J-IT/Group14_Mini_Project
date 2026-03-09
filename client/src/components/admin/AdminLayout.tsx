@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCog, BookOpen, Menu, X, GraduationCap, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, BookOpen, Menu, X, GraduationCap, ChevronRight, UserCheck, ClipboardList } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +18,8 @@ const AdminLayout: React.FC = () => {
     { label: 'Users', subtitle: 'Manage students', path: '/admin/users', icon: <Users size={18} />, accent: 'text-indigo-600', iconBg: 'bg-indigo-100' },
     { label: 'Instructors', subtitle: 'Manage instructors', path: '/admin/instructors', icon: <UserCog size={18} />, accent: 'text-emerald-600', iconBg: 'bg-emerald-100' },
     { label: 'Courses', subtitle: 'Moderate content', path: '/admin/courses', icon: <BookOpen size={18} />, accent: 'text-rose-600', iconBg: 'bg-rose-100' },
+    { label: 'Enrollments', subtitle: 'View all enrollments', path: '/admin/enrollments', icon: <UserCheck size={18} />, accent: 'text-orange-600', iconBg: 'bg-orange-100' },
+    { label: 'Quizzes', subtitle: 'Manage all quizzes', path: '/admin/quizzes', icon: <ClipboardList size={18} />, accent: 'text-pink-600', iconBg: 'bg-pink-100' },
   ];
 
   return (

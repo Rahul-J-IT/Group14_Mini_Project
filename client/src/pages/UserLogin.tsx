@@ -45,7 +45,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onLogin }) => {
 
       setLoading(false)
       
-      if (user?.role === 'ADMIN' || user?.role === 2) {
+      if (user?.role === 'ADMIN') {
         navigate("/admin/dashboard")
       } else {
         navigate("/")

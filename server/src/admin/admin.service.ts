@@ -195,6 +195,23 @@ export class AdminService {
     };
   }
 
+  // ─── Enrollment Management ────────────────────────────────────────
+
+  async getAllEnrollments(): Promise<Enrollment[]> {
+    return this.enrollmentRepository.find({
+      relations: ['user', 'course'],
+      order: { enrolledAt: 'DESC' },
+    });
+  }
+
+  async deleteEnrollment(id: number): Promise<void> {
+    const enrollment = await this.enrollmentRepository.findOne({ where: { id } });
+    if (!enrollment) {
+      throw new NotFoundException(`Enrollment with ID ${id} not found`);
+    }
+    await this.enrollmentRepository.remove(enrollment);
+  }
+
   // ─── Dashboard ────────────────────────────────────────────────────
 
   async getDashboardStats(): Promise<DashboardStats> {

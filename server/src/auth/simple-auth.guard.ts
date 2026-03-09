@@ -13,7 +13,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     sub: string;
     email: string;
-    role: number;
+    role: string;
   };
 }
 
@@ -53,7 +53,7 @@ export class SimpleAuthGuard implements CanActivate {
       const payload = this.jwtService.verify<{
         sub: string;
         email: string;
-        role: number;
+        role: string;
       }>(token);
       request.user = payload;
       return true;

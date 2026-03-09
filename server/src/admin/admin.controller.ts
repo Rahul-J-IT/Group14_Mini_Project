@@ -119,4 +119,16 @@ export class AdminController {
   deleteCourse(@Param('id') id: string) {
     return this.adminService.deleteCourse(+id);
   }
+
+  // ─── Enrollment Management ────────────────────────────────────────
+
+  @Get('enrollments')
+  getAllEnrollments() {
+    return this.adminService.getAllEnrollments();
+  }
+
+  @Delete('enrollments/:id')
+  deleteEnrollment(@Param('id') id: string) {
+    return this.adminService.deleteEnrollment(+id);
+  }
 }

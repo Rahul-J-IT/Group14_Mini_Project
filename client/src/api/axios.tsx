@@ -2,7 +2,7 @@
 import axios from "axios"
 
 const api = axios.create({
-	baseURL: (import.meta as any).env?.VITE_API_URL || "http://localhost:3001",
+	baseURL: (import.meta as any).env?.VITE_API_URL || "http://localhost:3000",
 })
 
 api.interceptors.request.use(
@@ -14,6 +14,21 @@ api.interceptors.request.use(
 		return config;
 	},
 	(error) => {
+		return Promise.reject(error);
+	}
+);
+
+// Clear stale/expired token and redirect to login on 401
+api.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		if (error.response?.status === 401) {
+			localStorage.removeItem("token");
+			localStorage.removeItem("user");
+			if (window.location.pathname !== "/userLogin") {
+				window.location.href = "/userLogin";
+			}
+		}
 		return Promise.reject(error);
 	}
 );

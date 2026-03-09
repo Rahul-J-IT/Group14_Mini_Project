@@ -1,4 +1,4 @@
-import { X, Star, BookOpen, Compass, TrendingUp, Home, ChevronRight, GraduationCap } from "lucide-react";
+import { X, Star, BookOpen, Compass, TrendingUp, Home, ChevronRight, GraduationCap, ClipboardList, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../api/axios";
@@ -15,7 +15,7 @@ interface User {
   email: string;
   firstname?: string;
   lastname?: string;
-  role: number;
+  role: string;
 }
 
 interface SectionLink {
@@ -30,14 +30,20 @@ interface SectionLink {
 
 const sections: SectionLink[] = [
   {
+    label: "My Enrollments",
+    subtitle: "View your enrolled courses",
+    icon: <UserCheck size={18} />,
+    accent: "text-violet-600",
+    iconBg: "bg-violet-100",
+    path: "/courses/enrolled",
+  },
+  {
     label: "Continue Learning",
     subtitle: "Pick up where you left off",
     icon: <BookOpen size={18} />,
     accent: "text-indigo-600",
     iconBg: "bg-indigo-100",
     path: "/courses/enrolled",
-  
-
   },
   {
     label: "Explore New Topics",
@@ -59,12 +65,12 @@ const sections: SectionLink[] = [
 
 const instructorSections: SectionLink[] = [
   {
-    label: "Lecturer Dashboard",
+    label: "Instructor Dashboard",
     subtitle: "Manage your courses and students",
     icon: <TrendingUp size={18} />,
     accent: "text-violet-600",
     iconBg: "bg-violet-100",
-    path: "/lecturer/dashboard",
+    path: "/instructor",
   },
   {
     label: "Create New Course",
@@ -72,7 +78,15 @@ const instructorSections: SectionLink[] = [
     icon: <Star size={18} />,
     accent: "text-indigo-600",
     iconBg: "bg-indigo-100",
-    path: "/lecturer/create-course",
+    path: "/instructor/createCourse",
+  },
+  {
+    label: "Create Quiz",
+    subtitle: "Add a quiz to your course section",
+    icon: <ClipboardList size={18} />,
+    accent: "text-rose-600",
+    iconBg: "bg-rose-100",
+    path: "/instructor/createQuiz",
   },
 ];
 
@@ -105,13 +119,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isLoggedIn = false }
     setLoading(true);
     console.log("Updating role for user:", user.id);
     try {
-      const response = await api.patch(`/users/${user.id}`, { role: 1 });
+      const response = await api.patch(`/users/${user.id}`, { role: 'INSTRUCTOR' });
       console.log("Update response:", response.data);
-      const updatedUser = { ...user, role: 1 };
+      const updatedUser = { ...user, role: 'INSTRUCTOR' };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       alert("Congratulations! You are now an instructor.");
-      navigate("/lecturer/dashboard");
+      navigate("/instructor");
       onClose();
     } catch (error: any) {
       console.error("Error becoming instructor:", error);
@@ -180,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isLoggedIn = false }
           </button>
 
           {/* Instructor Sections */}
-          {user && user.role === 1 && (
+          {user && user.role === 'INSTRUCTOR' && (
             <div className="mb-6">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">
                 Instructor Panel
@@ -240,8 +254,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isLoggedIn = false }
         {/* Footer - Only show if user is logged in */}
         {isLoggedIn && (
           <div className="px-5 py-4 border-t border-slate-100 space-y-4">
-            {/* Become Instructor Button */}
-            {user && user.role === 0 && (
+            {/* Become Instructor Button — only for STUDENTs */}
+            {user && user.role === 'STUDENT' && (
               <button
                 onClick={handleBecomeInstructor}
                 disabled={loading}

@@ -1,27 +1,29 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, GraduationCap } from "lucide-react";
+import { Menu, GraduationCap } from "lucide-react";
+import SearchBar from "./SearchBar";
 
 interface NavbarProps {
   onMenuClick: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
-  const [searchFocused, setSearchFocused] = useState<boolean>(false);
-  const [searchValue, setSearchValue] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
-  const isAllCoursesPage = location.pathname.startsWith("/courses/");
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  // Hide search bar on login / register pages
+  const isAuthPage =
+    location.pathname === "/userLogin" || location.pathname === "/userRegister";
+  const showSearch = !!token && !isAuthPage;
 
   return (
     <nav className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm">
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
-        {/* ================= LEFT SIDE ================= */}
+        {/* ── LEFT: Hamburger + Logo ── */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Hamburger */}
           <button
             onClick={onMenuClick}
             className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
@@ -30,55 +32,23 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
             <Menu size={22} />
           </button>
 
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(token ? "/" : "/userLogin")}
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-md">
               <GraduationCap size={16} className="text-white" />
             </div>
             <span className="font-extrabold text-slate-800 text-lg tracking-tight hidden sm:block">
               LearnHub
             </span>
-          </a>
+          </button>
         </div>
 
-        {/* ================= CENTER (SEARCH) ================= */}
-        {isAllCoursesPage && (
-          <div className="flex-1 max-w-xl mx-4">
-            <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all duration-200 ${searchFocused
-                ? "border-violet-400 bg-white shadow-md shadow-violet-100 ring-2 ring-violet-100"
-                : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                }`}
-            >
-              <Search
-                size={16}
-                className={`transition-colors ${searchFocused ? "text-violet-500" : "text-slate-400"
-                  }`}
-              />
+        {/* ── CENTER: Live Search (logged-in users only) ── */}
+        {showSearch && <SearchBar />}
 
-              <input
-                type="text"
-                placeholder="Search courses, topics, instructors..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                className="flex-1 bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
-              />
-
-              {searchValue && (
-                <button
-                  onClick={() => setSearchValue("")}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ================= RIGHT SIDE ================= */}
+        {/* ── RIGHT: Profile / Logout or Sign In / Sign Up ── */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {token && user ? (
             <>

@@ -11,7 +11,7 @@ const AdminProtectedRoutes: React.FC = () => {
     if (userStr) {
       const user = JSON.parse(userStr);
       // user.role is now 'ADMIN'
-      if (user.role === 'ADMIN' || user.role === 2) {
+      if (user.role === 'ADMIN') {
         isAdmin = true;
       }
     }

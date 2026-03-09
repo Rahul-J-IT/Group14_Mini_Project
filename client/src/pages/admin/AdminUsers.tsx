@@ -8,7 +8,7 @@ interface User {
   email: string;
   firstname: string;
   lastname: string;
-  role: string | number;
+  role: string;
   is_active: boolean;
 }
 
@@ -39,7 +39,7 @@ const AdminUsers: React.FC = () => {
   };
 
   const toggleBlockStatus = async (user: User) => {
-    if (user.role === 'ADMIN' || user.role === 2) return; // Cannot block admin
+    if (user.role === 'ADMIN') return; // Cannot block admin
     try {
       const action = user.is_active ? 'block' : 'unblock';
       await api.patch(`/admin/users/${user.id}/${action}`);
@@ -91,10 +91,10 @@ const AdminUsers: React.FC = () => {
                   <td className="px-6 py-4 text-gray-500">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'ADMIN' || user.role === 2 ? 'bg-purple-100 text-purple-700' : 
-                      user.role === 'INSTRUCTOR' || user.role === 1 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                      user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 
+                      user.role === 'INSTRUCTOR' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                     }`}>
-                      {user.role === 'ADMIN' || user.role === 2 ? 'ADMIN' : user.role === 'INSTRUCTOR' || user.role === 1 ? 'INSTRUCTOR' : 'STUDENT'}
+                      {user.role === 'ADMIN' ? 'ADMIN' : user.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -105,7 +105,7 @@ const AdminUsers: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {user.role !== 'ADMIN' && user.role !== 2 && (
+                    {user.role !== 'ADMIN' && (
                       <button
                         onClick={() => toggleBlockStatus(user)}
                         className={`text-sm font-medium px-3 py-1 rounded-md transition-colors ${

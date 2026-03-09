@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 
 interface CourseDetails {
   id: number;
@@ -31,15 +31,10 @@ const InstructorPage = () => {
   const [error, setError] = useState('');
   const [quizError, setQuizError] = useState('');
 
-  const token = localStorage.getItem('token');
-  const authHeader = { Authorization: `Bearer ${token}` };
-
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:3000/courses/my-courses', {
-        headers: authHeader,
-      });
+      const res = await api.get('/courses/my-courses');
       const data: CourseDetails[] = Array.isArray(res.data) ? res.data : res.data.data ?? [];
       setCourses(data);
       return data;
@@ -63,8 +58,8 @@ const InstructorPage = () => {
 
       const results = await Promise.all(
         sectionIds.map((sectionId) =>
-          axios
-            .get(`http://localhost:3000/quizzes?sectionId=${sectionId}`, { headers: authHeader })
+          api
+            .get(`/quizzes?sectionId=${sectionId}`)
             .then((r) => (Array.isArray(r.data) ? r.data : r.data.data ?? []))
             .catch(() => [])
         )
@@ -88,7 +83,7 @@ const InstructorPage = () => {
   const handleDeleteCourse = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
     try {
-      await axios.delete(`http://localhost:3000/courses/${id}`, { headers: authHeader });
+      await api.delete(`/courses/${id}`);
       setCourses((prev) => prev.filter((c) => c.id !== id));
     } catch (err: any) {
       alert(err?.response?.data?.message || 'Failed to delete course');
@@ -98,7 +93,7 @@ const InstructorPage = () => {
   const handleDeleteQuiz = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
     try {
-      await axios.delete(`http://localhost:3000/quizzes/${id}`, { headers: authHeader });
+      await api.delete(`/quizzes/${id}`);
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
     } catch (err: any) {
       alert(err?.response?.data?.message || 'Failed to delete quiz');
