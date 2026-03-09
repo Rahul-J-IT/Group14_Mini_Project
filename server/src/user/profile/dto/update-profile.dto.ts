@@ -1,4 +1,5 @@
 import { IsOptional, IsString, IsEmail } from 'class-validator';
+import { ROLES } from 'src/user/roles';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -24,4 +25,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   username?: string;
+
+  @IsOptional()
+  role?: number;
 }

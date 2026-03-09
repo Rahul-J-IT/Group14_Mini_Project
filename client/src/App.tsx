@@ -9,6 +9,8 @@ import HomePage from "./pages/HomePage";
 import AllCoursesPage from "./pages/AllCoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import ProfilePage from "./pages/ProfilePage";
+import QuizForm from "./pages/CreateQuizPage";
+import ViewQuiz from "./pages/QuizPage";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -30,7 +32,8 @@ function App() {
 
           <Route path="/courses/:section" element={<AllCoursesPage />} />
           <Route path="/course/:id" element={<CourseDetailPage />} />
-
+          <Route path="/quiz" element={<QuizForm></QuizForm>} />
+          <Route path="/quizzes" element={<ViewQuiz />} />
           <Route path="*" element={<UserLogin />} />
         </Routes>
       </main>

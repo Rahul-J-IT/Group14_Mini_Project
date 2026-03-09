@@ -521,7 +521,7 @@ Authorization: Bearer <token>
 **Request Body:**
 ```json
 {
-  "sectionId": 1,
+  "sectionId  ": 1,
   "title": "React Basics Quiz",
   "description": "Test your React knowledge",
   "duration": 1800,
