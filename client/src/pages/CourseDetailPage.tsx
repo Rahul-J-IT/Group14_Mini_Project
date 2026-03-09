@@ -164,7 +164,7 @@ export default function CourseDetailPage() {
                       </span>
                     )}
                   </div>
-                  <button className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                  <button className="">
                     <ShoppingCart size={18} />
                     {course.price === 0 ? "Enroll for Free" : "Buy Now"}
                   </button>
