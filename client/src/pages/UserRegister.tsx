@@ -30,7 +30,13 @@ const UserRegister: React.FC = () => {
         }
 
         try {
-            await axios.post("/user", { username: form.username, email: form.email, password: form.password })
+            await axios.post("/auth/register", {
+                username: form.username,
+                email: form.email,
+                password: form.password,
+                firstname: "",
+                lastname: ""
+            })
             navigate("/userLogin")
         } catch (err: any) {
             setError(err?.response?.data?.message || "Registration failed")

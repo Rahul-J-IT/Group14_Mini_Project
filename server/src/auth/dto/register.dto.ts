@@ -1,5 +1,10 @@
-// auth/dto/register.dto.ts
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 import { ROLES } from 'src/user/roles';
 
 export class RegisterDto {
@@ -29,5 +34,6 @@ export class RegisterDto {
   bio?: string;
 
   @IsOptional()
+  @IsEnum(ROLES)
   role?: ROLES;
 }

@@ -14,11 +14,11 @@ export class User {
   @Column({ nullable: false, unique: true })
   username: string;
 
-    @Column({default: ""})
-    firstname: string;
+  @Column({ default: '' })
+  firstname: string;
 
-    @Column({default: ""})
-    lastname: string;
+  @Column({ default: '' })
+  lastname: string;
 
   @Column({ nullable: false, unique: true })
   email: string;

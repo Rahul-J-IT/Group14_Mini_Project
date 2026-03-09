@@ -1,36 +1,65 @@
-import { IsNotEmpty, IsNumber, IsString, IsUrl, isURL } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsUrl,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+class CreateSectionInCourseDto {
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  orderIndex?: number;
+}
 
 export class CreateCourseDto {
-
-  
   @IsString()
   @IsNotEmpty()
-  title: string = '';
+  title: string;
 
   @IsString()
   @IsNotEmpty()
-  description: string = '';
+  description: string;
 
   @IsString()
   @IsNotEmpty()
-  instructor: string = '';
-
-  @IsString()
-  @IsNotEmpty()
-  duration: string = '';
+  duration: string = '0h 0m';
 
   @IsNumber()
-  price: number = 0;
+  price: number;
 
+  @IsOptional()
   @IsUrl()
-  thumbnailUrl: string = '';
+  thumbnailUrl?: string;
 
+  @IsOptional()
   @IsUrl()
-  videoUrl: string = '';
+  videoUrl?: string;
 
   @IsString()
   @IsNotEmpty()
-  language: string = '';
+  language: string;
+  @IsOptional()
+  @IsEnum(['draft', 'published', 'archived'])
+  status?: string;
 
-
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateSectionInCourseDto)
+  sections?: CreateSectionInCourseDto[];
 }

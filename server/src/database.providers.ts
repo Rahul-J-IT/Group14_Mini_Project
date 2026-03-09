@@ -1,6 +1,11 @@
-// database.providers.ts
 import { DataSource } from 'typeorm';
 import { User } from './user/entities/user.entity';
+import { Course } from './course/entities/course.entity';
+import { Enrollment } from './enrollment/entities/enrollment.entity';
+import { Section } from './section/entities/section.entity';
+import { Quiz } from './quiz/entities/quiz.entity';
+import { ContentType } from './content-type/entities/content-type.entity';
+import { UserProgress } from './progress/entities/progress.entity';
 import { ConfigService } from '@nestjs/config';
 
 export const databaseProviders = [
@@ -15,7 +20,15 @@ export const databaseProviders = [
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User],
+        entities: [
+          User,
+          Course,
+          Enrollment,
+          Section,
+          Quiz,
+          ContentType,
+          UserProgress,
+        ],
         synchronize: true,
       });
 

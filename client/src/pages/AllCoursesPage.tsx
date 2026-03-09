@@ -7,7 +7,6 @@ import {
   X,
   ChevronDown,
   BookOpen,
-  Star,
   TrendingUp,
   Compass,
   Sparkles,

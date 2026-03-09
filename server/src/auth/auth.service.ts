@@ -8,6 +8,10 @@ import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+/**
+ * @name AuthService
+ * @summary This service interacts with the UserService to manage user data and uses JwtService to generate JWT tokens for authenticated users. It also handles password hashing and validation using bcrypt.
+ */
 @Injectable()
 export class AuthService {
   constructor(
@@ -15,6 +19,13 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  /**
+   * @name register
+   * @summary This method registers a new user. It first checks if a user with the provided email already exists. If so, it throws a BadRequestException. If not, it hashes the user's password using bcrypt and creates a new user in the database. Finally, it generates a JWT token for the newly registered user and returns it along with the user's information.
+   * @param {RegisterDto} dto - The data transfer object containing the user's registration information.
+   * @returns An object containing a success message, the generated JWT token, and the user's information.
+   * @throws {BadRequestException} If a user with the provided email already exists.
+   */
   async register(dto: RegisterDto) {
     const existingUser = await this.usersService.findByEmail(dto.email);
 
@@ -37,10 +48,25 @@ export class AuthService {
 
     return {
       message: 'User registered successfully',
-      access_token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload),
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        firstname: newUser.firstname,
+        lastname: newUser.lastname,
+        role: newUser.role,
+      },
     };
   }
 
+  /**
+   * @name login
+   * @summary This method handles user login. It first checks if a user with the provided email exists. If not, it throws an UnauthorizedException. If the user exists, it compares the provided password with the hashed password stored in the database using bcrypt. If the passwords match, it generates a JWT token for the user and returns it along with the user's information.
+   * @param {RegisterDto} dto - The data transfer object containing the user's login information.
+   * @returns An object containing the generated JWT token and the user's information.
+   * @throws {UnauthorizedException} If the provided credentials are invalid.
+   */
   async login(dto: RegisterDto) {
     const user = await this.usersService.findByEmail(dto.email);
 
@@ -61,10 +87,19 @@ export class AuthService {
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+      },
     };
   }
 
+  // TODO: This should probably be removed or should be restricted to admin users only
   async getUsers() {
     return this.usersService.findAll();
   }

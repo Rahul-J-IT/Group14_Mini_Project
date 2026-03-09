@@ -8,39 +8,30 @@ import Sidebar from "./components/Sidebar";
 import HomePage from "./pages/HomePage";
 import AllCoursesPage from "./pages/AllCoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 
-const App: React.FC = () => {
+function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => Boolean(localStorage.getItem("token")));
-
-  useEffect(() => {
-    const onStorage = () => setIsLoggedIn(Boolean(localStorage.getItem("token")));
-    // Listen for storage changes (in case multiple tabs)
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-
+  const [isLoggedIn] = useState<boolean>(false); // Change to true after login
   return (
     <BrowserRouter>
-      {isLoggedIn && <Navbar onMenuClick={() => setSidebarOpen(true)} />}
-      {isLoggedIn && (
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} />
-      )}
-      
+      <Navbar onMenuClick={() => setSidebarOpen(true)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} />
+
       <main>
         <Routes>
-          <Route path="/userLogin" element={<UserLogin onLogin={() => setIsLoggedIn(true)} />} />
-        <Route path="/userRegister" element={<UserRegister />} />
+          <Route path="/userLogin" element={<UserLogin />} />
+          <Route path="/userRegister" element={<UserRegister />} />
 
-        <Route element={<ProtectedRoutes />}>
-          <Route path="/" element={<HomePage />} />
-        </Route>
+          <Route element={<ProtectedRoutes />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/user/profile/:id" element={<ProfilePage />} />
+          </Route>
 
-        <Route path="*" element={<UserLogin />} />
-          
-         <Route path="/courses/:section" element={<AllCoursesPage />} />
-         <Route path="/course/:id" element={<CourseDetailPage />} />
+          <Route path="/courses/:section" element={<AllCoursesPage />} />
+          <Route path="/course/:id" element={<CourseDetailPage />} />
+
+          <Route path="*" element={<UserLogin />} />
         </Routes>
       </main>
     </BrowserRouter>

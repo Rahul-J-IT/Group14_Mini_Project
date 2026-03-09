@@ -25,7 +25,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ onLogin }) => {
     setLoading(true)
 
     try {
-      const res = await api.post("/user/login", {
+      const res = await api.post("/auth/login", {
         email: form.email,
         password: form.password,
       })
