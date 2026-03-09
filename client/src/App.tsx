@@ -17,7 +17,8 @@ import CreateQuizPage from "./pages/CreateQuizPage";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isLoggedIn] = useState<boolean>(false); // Change to true after login
+  // Re-calculate on every render to ensure it stays in sync with localStorage
+  const isLoggedIn = !!localStorage.getItem("token");
   return (
     <BrowserRouter>
       <Navbar onMenuClick={() => setSidebarOpen(true)} />
