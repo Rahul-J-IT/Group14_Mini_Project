@@ -39,9 +39,6 @@ export class CreateCourseDto {
   @IsNotEmpty()
   duration: string = '0h 0m';
 
-  @IsNumber()
-  price: number;
-
   @IsOptional()
   @IsUrl()
   thumbnailUrl?: string;
